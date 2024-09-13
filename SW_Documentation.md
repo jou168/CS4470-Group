@@ -1,5 +1,5 @@
---------------------Software Implementation and Requirements--------------------
-Constraints
+#Software Implementation and Requirements
+##Constraints
 ------------
 Programming Language: C/C++, Java, or Python
 Operating System: Linux or Windows
@@ -8,13 +8,13 @@ select() API or multi-threads for handling multi-socketed connections
 Server/Client side code on one program
 Program runs from OS terminal
 
-Constraint Implementations
+##Constraint Implementations
 --------------------------
 Programming Language: Python
 Operating System: Windows
 Multi-socketing: TBD
 
-Required Functions
+##Required Functions
 ------------------
 When launched, your process should work like a UNIX shell. It should accept incoming connections and at
 the same time provide a user interface that will offer the following command options: (Note that specific
@@ -55,7 +55,7 @@ Message: “<received message>”
 list by removing the peer that exits.
 
 
-Potential Implementations
+###Potential Implementations
 -------------------------
 argparse library for handling terminal input
 threading library for multi-socketing
