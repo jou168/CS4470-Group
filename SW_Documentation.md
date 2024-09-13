@@ -56,6 +56,6 @@ Message: “<received message>”
 list by removing the peer that exits.
 
 
-### Potential Implementations
-argparse library for handling terminal input
-threading library for multi-socketing
+### Potential Implementations  
+argparse library for handling terminal input  
+threading library for multi-socketing  
