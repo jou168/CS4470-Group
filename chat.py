@@ -4,7 +4,7 @@ import threading #multisocketing, will solve server issue not allowing terminal 
 import time
 
 
-clients= [] #2d array that will hold all connection information between peers
+clients = {} # dictionary, key-value pairs, to hold ip/port info
 serverSocket = socket(AF_INET, SOCK_STREAM) #Initialized outside of server() for port number fetching
 
 
@@ -14,9 +14,11 @@ def server(serverPort):
    print("The server is ready to recieve")
    while 1:
        connectionSocket, addr = serverSocket.accept()
-       sentence = connectionSocket.recv(1024).decode('utf-8')
-       captializedSentence = sentence.upper()
-       connectionSocket.send(captializedSentence.encode('utf-8'))
+       print("A User has connected from,", addr[0])
+       clients[addr[0]] = addr[1]
+       #sentence = connectionSocket.recv(1024).decode('utf-8')
+       #captializedSentence = sentence.upper()
+       #connectionSocket.send(captializedSentence.encode('utf-8'))
        connectionSocket.close()
 def client():
    time.sleep(1) #Gives time for threads,so client() and server() commands don't overlap weirdly i.e. print statements
@@ -26,6 +28,7 @@ def client():
    #modifiedSentence = clientSocket.recv(1024).decode('utf-8')
    #print('From Server:', modifiedSentence)
    while 1:
+
        serverIP = ""
        serverPort = 0
        userInput = input("Enter a command: ")
@@ -34,14 +37,12 @@ def client():
        #elif userInput.lower() == "myip":
        elif userInput.lower() == "myport":
            myport()
-       elif userInput.lower() == ('connect'+ serverIP + str(serverPort)):
-           clientSocket = socket(AF_INET, SOCK_STREAM)
-           clientSocket.connect((serverIP, serverPort))
-           clients.append([serverIP, serverPort])
-           print("You have connected to", serverIP, "on socket", serverPort)
+       elif userInput.lower().startswith("connect"):
+           connect(userInput)
        elif userInput.lower() == "list":
            list()
-       #elif userInput.lower() == "terminate":
+       elif userInput.lower().startswith("terminate"):
+           terminate(userInput)
        #elif userInput.lower() == "send":
        #elif userInput.lower() == "exit":
 
@@ -60,16 +61,31 @@ def help():
 def myport():
    portNum = serverSocket.getsockname()[1] #Index 1 gives port #, Index 0 gives IP default "0.0.0.0"
    print("Your server is running on port", portNum)
-#def connect()
+def connect(input):
+    connectInput = input.split()
+    if len(connectInput) == 3:
+        command, serverIP, portString = connectInput  # the split will be divided up between these three variables
+        serverPort = int(portString)
+        clientSocket = socket(AF_INET, SOCK_STREAM)
+        clientSocket.connect((serverIP, serverPort))
+        clients[serverIP] = serverPort
+        print("You have connected to", serverIP, "on socket", serverPort)
 def list():
    print("id: IP Addresses     Port No.")
    id = 1
-   for client in clients:
-       for index in client:
-           print(id, " ", index, end=" ")
+   for ip, port in clients.items():
+       print(id, ip, port)
        id += 1
-   print()
-#def terminate()
+def terminate(input):
+    command, id = input.split()
+    id = int(id) - 1 # accounts for indexing
+    for client in clients:
+        if id == client:
+            for ip, port in client:
+                socket = ip, port
+                socket.close()
+                del clients[ip]
+
 #def send()
 #def exit()
 
