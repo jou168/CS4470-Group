@@ -1,11 +1,9 @@
-import socket
-import sys
-import argparse  #User terminal input
-import threading  #multisocketing, will solve server issue not allowing terminal usage
-import time
+from socket import *
+import argparse  # User terminal input
+import threading  # multisocketing, will solve server issue not allowing terminal usage
 
-clients = []  #2d array that will hold all connection information between peers
-serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  #Initialized outside of server() for port number fetching
+clients = []  # 2d array that will hold all connection information between peers
+serverSocket = socket(AF_INET, SOCK_STREAM)  # Initialized outside of server() for port number fetching
 server_running = True
 
 
@@ -20,10 +18,6 @@ def server(serverPort):
             threading.Thread(target=handle_client, args=(conn, addr)).start()
         except OSError:
             break
-        # sentence = conn.recv(1024).decode('utf-8')
-        # captializedSentence = sentence.upper()
-        # conn.send(captializedSentence.encode('utf-8'))
-        # conn.close()
 
 
 def handle_client(conn, addr):
@@ -40,7 +34,7 @@ def handle_client(conn, addr):
 
 def connect(server_ip, server_port):
     try:
-        clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        clientSocket = socket(AF_INET, SOCK_STREAM)
         clientSocket.connect((server_ip, server_port))
         clients.append((clientSocket, (server_ip, server_port)))
         print("The client is connected to {server_ip}:{server_port}")
@@ -64,19 +58,13 @@ def remove_client(addr):
 
 
 def client():
-    # time.sleep(1)  #Gives time for threads,so client() and server() commands don't overlap weirdly i.e. print statements
-    # print("For command information type: help")
-    #sentence = input("Input lowercase sentence:")
-    #clientSocket.send(sentence.encode('utf-8'))
-    #modifiedSentence = clientSocket.recv(1024).decode('utf-8')
-    #print('From Server:', modifiedSentence)
     while True:
         userInput = input("Enter a command: ").split()
 
         if userInput[0] == "connect" and len(userInput) == 3:
             try:
                 server_ip = userInput[1]
-                server_port =  int(userInput[2])
+                server_port = int(userInput[2])
                 connect(server_ip, server_port)
             except ValueError:
                 print("Error: port must be a number.")
@@ -97,22 +85,6 @@ def client():
             print("Invalid command.")
 
 
-        # userInput = input("Enter a command: ")
-        # if userInput.lower() == 'help':
-        #     help()
-        # #elif userInput.lower() == "myip":
-        # elif userInput.lower() == ('connect' + serverIP + str(serverPort)):
-        #     clientSocket = socket(AF_INET, SOCK_STREAM)
-        #     clientSocket.connect((serverIP, serverPort))
-        #     clients.append([serverIP, serverPort])
-        #     print("You have connected to", serverIP, "on socket", serverPort)
-        # elif userInput.lower() == "list":
-        #     list()
-        #elif userInput.lower() == "terminate":
-        #elif userInput.lower() == "send":
-        #elif userInput.lower() == "exit":
-
-
 def help():
     print("myip: Displays ipv4 address of the process")
     print("myport: Displays the port that the server socket is listening on")
@@ -127,7 +99,7 @@ def help():
 
 
 def get_ip_address():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s = socket(AF_INET, SOCK_DGRAM)
     try:
         s.connect(("8.8.8.8", 80))  # Connect to Google's DNS (no data sent)
         ip_address = s.getsockname()[0]  # Get the IP used for this connection
@@ -159,10 +131,6 @@ def list():
 
 
 if __name__ == '__main__':
-    # terminalInput = argparse.ArgumentParser(description="TCP server/client Initialization")
-    # terminalInput.add_argument('port', type=int, help='Listening Port')
-    # terminalInput.add_argument('--ip', type=str, default="localhost", help="computer ip address to connect to")
-    # -- for ip adds optionality, so not mandatory input, but terminal requires --ip when inputting address
     parser = argparse.ArgumentParser(description="TCP server/client Initialization")
     parser.add_argument('port', type=int, help='The port that the server socket is listening on.')
     args = parser.parse_args()
@@ -175,7 +143,3 @@ if __name__ == '__main__':
 
     serverThread.join()
     clientThread.join()
-    #if args.ip == "localhost":
-    #server(args.port)
-    #elif args.ip != "localhost":
-    # client(args.ip, args.port)
