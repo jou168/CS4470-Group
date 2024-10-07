@@ -27,6 +27,7 @@ def server(serverPort):
             if not any(addr[0] == client[1] and addr[1] == client[2] for client in clients):
                 clients.append([len(clients) + 1, addr[0], addr[1], connectionSocket])
                 print("\nA user has connected from,", addr[0])
+                print("Enter a command: ", end ='', flush=True)
             threading.Thread(target=handle_client, args=(connectionSocket, addr)).start()
         except OSError:
             break
@@ -78,19 +79,20 @@ def client():
             send(userInput)
         elif userInput.lower() == "exit":
             exit()
+        else:
+            print("Invalid command. Type 'help' for a list of commands")
 
 
 def help():
-    print("myip: Displays ipv4 address of the process")
-    print("myport: Displays the port that the server socket is listening on")
-    print(
-        "connect (ip, port #): Given two inputs, will attempt to that given computer and socket. Failure/Success will give corresponding message to client and server peer")
-    print("list: Displays connection_id, IP, and port # of all connections to and from other peers")
-    print(
-        "terminate (connection_id): Terminates connection between peers. errors for no valid connections should be displayed, and disconnections initiated by other peers should also")
-    print(
-        "send (connection_id): Sends message based on list of connections, sender should get info of message, reciever should get sender info and message")
-    print("exit: Close all connections made on this process.")
+    print("""
+    myip: Displays ipv4 address of the process
+    myport: Displays the port that the server socket is listening on
+    connect (ip, port #): Given two inputs, will attempt to that given computer and socket. Failure/Success will give corresponding message to client and server peer
+    list: Displays connection_id, IP, and port # of all connections to and from other peers")
+    terminate (connection_id): Terminates connection between peers. errors for no valid connections should be displayed, and disconnections initiated by other peers should also
+    send (connection_id): Sends message based on list of connections, sender should get info of message, receiver should get sender info and message
+    exit: Close all connections made on this process.
+    """)
 
 
 def myip():
@@ -128,14 +130,29 @@ def list():
 
 
 def terminate(input):
-    command, id = input.split()
-    id = int(id)
-    for client in clients:
-        if id == client[0]:
-            index = id - 1
-            socket = clients[index][3]
+    input = input.replace("terminate", "").strip()
+
+    if not clients:
+        print("No clients connected")
+
+    if not input.isdigit():
+        print("Usage: terminate <connection_id>")
+        return
+
+    id = int(input)
+
+    index = id - 1
+
+    if  0 <= index < len(clients) and client[index][0] == id:
+        socket = clients[index][3]
+        try:
             socket.close()
-            del clients[index]
+            print(f"Client {id} disconnected")
+        except OSError as e:
+            print(f"Error disconnecting client ID {id}: {e}")
+        clients.pop(index)
+    else:
+        print(f"No client found with connection ID {id}. Use 'list' to list all connections")
 
 
 def send(input):
@@ -156,7 +173,7 @@ def send(input):
                 socket = client[3]
                 # socket.connect((client[1], client[2]))
                 socket.send(message.encode('utf-8'))
-                print("Message sent to:", index)
+                print(f"Message sent to:", {index})
                 return
         print(f"No client found with connection ID {index}. Use 'list' to list all connections")
 
