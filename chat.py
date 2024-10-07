@@ -143,7 +143,7 @@ def terminate(input):
 
     index = id - 1
 
-    if  0 <= index < len(clients) and client[index][0] == id:
+    if 0 <= index < len(clients) and clients[index][0] == id:
         socket = clients[index][3]
         try:
             socket.close()
@@ -161,24 +161,24 @@ def send(input):
     if not clients:
         print("No clients connected")
 
-    if len(input) < 2 or input[0] != ' ':
+    parts = input.split(maxsplit=1)
+    if len(input) < 2 or not parts[0].isdigit():
         print("Usage: send <connection_id> <message>")
         return
 
-    try:
-        index = int(input[1])
-        message = input[3:]
-        for client in clients:
-            if index == client[0]:
-                socket = client[3]
-                # socket.connect((client[1], client[2]))
+    index = int(parts[0])
+    message = parts[1]
+
+    for client in clients:
+        if index == client[0]:
+            socket = client[3]
+            try:
                 socket.send(message.encode('utf-8'))
                 print(f"Message sent to:", {index})
-                return
+            except OSError as e:
+                print(f"Error sending message to connection ID {index}: {e}")
+            return
         print(f"No client found with connection ID {index}. Use 'list' to list all connections")
-
-    except ValueError:
-        print("Invalid connection ID")
 
 
 def exit():
