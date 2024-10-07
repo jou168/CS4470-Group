@@ -1,6 +1,7 @@
 import argparse  # User terminal input
 import sys
 import threading  # multisocketing, will solve server issue not allowing terminal usage
+import keyboard
 import time
 from socket import *
 
@@ -15,6 +16,7 @@ is_running: Global variable to ensure server is running and when exit() is calle
 server shuts down gracefully and is not trying to accept new connections
 """
 is_running = True
+prompt_displayed = False
 
 
 def server(serverPort):
@@ -39,6 +41,7 @@ def handle_client(conn, addr):
             message = conn.recv(1024).decode('utf-8')
             if message:
                 print(f"\nMessage from: {addr[0]} | {addr[1]}: {message}")
+                # print_cmd_prompt()
             else:
                 break
         except OSError:
@@ -51,18 +54,44 @@ def handle_server(clientSocket, addr):
             message = clientSocket.recv(1024).decode('utf-8')
             if message:
                 print(f"\nMessage from: {addr[0]} | {addr[1]}: {message}")
+                # print_cmd_prompt()
             else:
                 break
         except OSError:
             break
 
 
+# def prompt_on_keypress():
+#     global prompt_displayed
+#     while is_running:
+#         keyboard.read_key()
+#         if not prompt_displayed:
+#             print("\nEnter a command: ", end ='', flush=True)
+#             prompt_displayed = True
+#         time.sleep(0.2)
+#
+#
+# def print_cmd_prompt():
+#     global prompt_displayed
+#     if not prompt_displayed:
+#         print("\nEnter a command: ", end ='', flush=True)
+#         prompt_displayed = True
+
+
 def client():
+    global prompt_displayed
     time.sleep(1)  # Gives time for threads,so client() and server() commands don't overlap weirdly i.e. print statements
     print("For command information type: help")
+
+    # threading.Thread(target=prompt_on_keypress, daemon=True).start()
+
     while True:
-        time.sleep(1)  # Helps with communication between clients to not overlap terminal output
+        # if not prompt_displayed:  # Check if prompt has already been displayed
+        #     print("\nEnter a command: ", end='', flush=True)
+        #     prompt_displayed = True
         userInput = input("Enter a command: ")
+        # prompt_displayed = False
+
         if userInput.lower() == 'help':
             help()
         elif userInput.lower() == "myip":
@@ -185,9 +214,12 @@ def exit():
     global is_running
     is_running = False
     print("Terminating all connections and exiting...")
+
     for client in clients:
-        print(f"Closing connection to {client[0]}:{client[1]}")
+        print(f"Closing connection to client ID {client[0]} at {client[1]}:{client[2]}")
+        client[3].close()
     clients.clear()
+
     serverSocket.close()
     sys.exit(0)
 
