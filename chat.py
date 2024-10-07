@@ -38,7 +38,7 @@ def handle_client(conn, addr):
         try:
             message = conn.recv(1024).decode('utf-8')
             if message:
-                print(f"\nMessage received From: {addr[0]} \nSender's Port: {addr[1]} \n{message}")
+                print(f"\n{addr[0]} | {addr[1]}: {message}")
             else:
                 break
         except OSError:
@@ -50,7 +50,7 @@ def handle_server(clientSocket, addr):
         try:
             message = clientSocket.recv(1024).decode('utf-8')
             if message:
-                print(f"\nMessage received From: {addr[0]}:\nSender's Port: {addr[1]} \n{message}")
+                print(f"\n{addr[0]} | {addr[1]}: {message}")
             else:
                 break
         except OSError:
