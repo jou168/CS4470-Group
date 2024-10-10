@@ -19,6 +19,13 @@ is_running = True
 
 
 def server(server_port):
+    """
+    Initializes the server socket, and binds it to the given port, and listens for incoming connections.
+    Each new connection is handled by creating a new thread.
+
+    :param server_port: The port number which server will listen for incoming connections.
+    :return: None
+    """
     serverSocket.bind(("", server_port))
     serverSocket.listen(1)
     print("The server is ready to receive")
@@ -34,6 +41,14 @@ def server(server_port):
 
 
 def handle_client(conn, addr):
+    """
+    Handles communication with a single client connection. Receives messages from the client and processes
+    them, printing information or updating the client as needed.
+
+    :param conn: The socket object for client connection
+    :param addr: The address tuple (IP, port) of the client connection
+    :return: None
+    """
     while True:
         try:
             message = conn.recv(1024).decode('utf-8')
@@ -54,6 +69,14 @@ def handle_client(conn, addr):
 
 
 def handle_server(client_socket, addr):
+    """
+    Handles receiving messages from a connected server. Similar to handle_client(), but handles the connections
+    initiated by current client to other servers.
+
+    :param client_socket: The socket object for server connection
+    :param addr: The address tuple (IP, port) of the server
+    :return: None
+    """
     while True:
         try:
             message = client_socket.recv(1024).decode('utf-8')
@@ -74,6 +97,11 @@ def handle_server(client_socket, addr):
 
 
 def client():
+    """
+    This functions runs continuously accepting commands the user enters in.
+
+    :return: None
+    """
     time.sleep(1)  # Gives time for threads,so client() and server() commands don't overlap weirdly i.e. print statements
     print("For command information type: help")
     while True:
@@ -100,6 +128,11 @@ def client():
 
 
 def help_menu():
+    """
+    Displays a list of available commands with their description.
+
+    :return: None
+    """
     print("""
     myip: Displays ipv4 address of the process
     myport: Displays the port that the server socket is listening on
@@ -112,6 +145,11 @@ def help_menu():
 
 
 def my_ip():
+    """
+    Function attempts to retrieve and display the servers IPv4 address by connecting to an external Google server.
+
+    :return: None
+    """
     sock = socket(AF_INET, SOCK_DGRAM)
     try:
         sock.connect(("8.8.8.8", 80))  # Connect to Google DNS
@@ -125,11 +163,23 @@ def my_ip():
 
 
 def my_port():
+    """
+    Retrieves the port that the server socket is listening on.
+
+    :return: None
+    """
     port_num = serverSocket.getsockname()[1]  # Index 1 gives port #, Index 0 gives IP default "0.0.0.0"
     print(f"Your server is running on port:", port_num)
 
 
 def connect(user_input):
+    """
+    Attempts to connect to another client specified by IP and port number.
+    Adds the connection to the list if successful and starts a new thread to handle communication.
+
+    :param user_input: Input from the user, expected to contain IP and port number.
+    :return: None
+    """
     connect_input = user_input.split()
     if len(connect_input) == 3:
         command, server_ip, port_string = connect_input  # the split will be divided up between these three variables
@@ -164,12 +214,24 @@ def connect(user_input):
 
 
 def connection_list():
+    """
+    Displays a list of all active connections with their ID, IP address, and port number.
+
+    :return: None
+    """
     print("id: IP Addresses     Port No.")
     for current_client in clients:
         print(f"{current_client[0]}: {current_client[1]} {current_client[2]:>10}")
 
 
 def terminate(user_input):
+    """
+    Terminates connection between a specified client using its connection ID. Sends a termination
+    message to the client and closes the connection.
+
+    :param user_input:
+    :return:
+    """
     try:
         command, client_id = user_input.split()
         client_id = int(client_id)
@@ -193,6 +255,13 @@ def terminate(user_input):
 
 
 def send(user_input):
+    """
+    Sends a message to specified client using its connection ID. If not connections exist,
+    or the command format is incorrect, it prints the appropriate error message.
+
+    :param user_input: Command input from the user, expected to contain connection ID and message.
+    :return: None
+    """
     try:
         if not clients:
             print("No active connections to send a message.")
@@ -229,6 +298,11 @@ def send(user_input):
 
 
 def exit_app():
+    """
+    Terminates all connections made on this process and close the server before exiting the program.
+
+    :return: None
+    """
     global is_running
     is_running = False
     print("Terminating all connections and exiting...")
