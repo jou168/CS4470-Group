@@ -1,3 +1,4 @@
+
 import sys
 from socket import *
 import argparse  # User terminal input
@@ -18,34 +19,50 @@ server shuts down gracefully and is not trying to accept new connections
 is_running = True
 
 
-def server(serverPort):
-    serverSocket.bind(("", serverPort))
+def server(server_port):
+    """
+    Initializes the server socket, and binds it to the given port, and listens for incoming connections.
+    Each new connection is handled by creating a new thread.
+
+    :param server_port: The port number which server will listen for incoming connections.
+    :return: None
+    """
+    serverSocket.bind(("", server_port))
     serverSocket.listen(1)
-    print("The server is ready to recieve")
+    print("The server is ready to receive")
     while is_running:
         try:
-            connectionSocket, addr = serverSocket.accept()
-            if not any(addr[0] == client[1] and addr[1] == client[2] for client in clients):
-                clients.append([len(clients) + 1, addr[0], addr[1], connectionSocket])
-                print("\nA user has connected from,", addr[0])
-            threading.Thread(target=handle_client, args=(connectionSocket, addr)).start()
+            connection_socket, addr = serverSocket.accept()
+            if not any(addr[0] == current_client[1] and addr[1] == current_client[2] for current_client in clients):
+                clients.append([len(clients) + 1, addr[0], addr[1], connection_socket])
+                print("\nA user has connected from:", addr[0])
+            threading.Thread(target=handle_client, args=(connection_socket, addr)).start()
         except OSError:
             break
 
 
 def handle_client(conn, addr):
+    """
+    Handles communication with a single client connection. Receives messages from the client and processes
+    them, printing information or updating the client as needed.
+
+    :param conn: The socket object for client connection
+    :param addr: The address tuple (IP, port) of the client connection
+    :return: None
+    """
     while True:
         try:
             message = conn.recv(1024).decode('utf-8')
             if message:
-                messageParts = message.split()
+                message_parts = message.split()
                 counter = 0
-                for client in clients:
-                    if messageParts[0] == client[1]:
+                for current_client in clients:
+                    if message_parts[0] == current_client[1]:
                         print(f"{message}")
                         del clients[counter]
+                        conn.close()
                     elif counter+1 == len(clients):
-                        print(f"\nMessage received From: {addr[0]} \nSender's Port: {addr[1]} \n{message}")
+                        print(f"\nMessage received from {addr[0]} \nSender's Port: {addr[1]} \nMessage: {message}")
                     counter += 1
             else:
                 break
@@ -53,19 +70,28 @@ def handle_client(conn, addr):
             break
 
 
-def handle_server(clientSocket, addr):
+def handle_server(client_socket, addr):
+    """
+    Handles receiving messages from a connected server. Similar to handle_client(), but handles the connections
+    initiated by current client to other servers.
+
+    :param client_socket: The socket object for server connection
+    :param addr: The address tuple (IP, port) of the server
+    :return: None
+    """
     while True:
         try:
-            message = clientSocket.recv(1024).decode('utf-8')
+            message = client_socket.recv(1024).decode('utf-8')
             if message:
-                messageParts = message.split()
+                message_parts = message.split()
                 counter = 0
-                for client in clients:
-                    if messageParts[0] == client[1]:
+                for current_client in clients:
+                    if message_parts[0] == current_client[1]:
                         print(f"{message}")
                         del clients[counter]
+                        client_socket.close()
                     elif counter+1 == len(clients):
-                        print(f"\nMessage received From: {addr[0]} \nSender's Port: {addr[1]} \n{message}")
+                        print(f"\nMessage received from {addr[0]} \nSender's Port: {addr[1]} \nMessage: {message}")
                     counter += 1
             else:
                 break
@@ -74,133 +100,221 @@ def handle_server(clientSocket, addr):
 
 
 def client():
-    time.sleep(
-        1)  # Gives time for threads,so client() and server() commands don't overlap weirdly i.e. print statements
+    """
+    This functions runs continuously accepting commands the user enters in.
+
+    :return: None
+    """
+    time.sleep(1)  # Gives time for threads,so client() and server() commands don't overlap weirdly i.e. print statements
     print("For command information type: help")
     while True:
         time.sleep(1)  # Helps with communication between clients to not overlap terminal output
-        userInput = input("Enter a command: ")
-        if userInput.lower() == 'help':
-            help()
-        elif userInput.lower() == "myip":
-            myip()
-        elif userInput.lower() == "myport":
-            myport()
-        elif userInput.lower().startswith("connect"):
-            connect(userInput)
-        elif userInput.lower() == "list":
-            list()
-        elif userInput.lower().startswith("terminate"):
-            terminate(userInput)
-        elif userInput.lower().startswith("send"):
-            send(userInput)
-        elif userInput.lower() == "exit":
-            exit()
+        user_input = input("Enter a command: ")
+        if user_input.lower() == 'help':
+            help_menu()
+        elif user_input.lower() == "myip":
+            my_ip()
+        elif user_input.lower() == "myport":
+            my_port()
+        elif user_input.lower().startswith("connect"):
+            connect(user_input)
+        elif user_input.lower() == "list":
+            connection_list()
+        elif user_input.lower().startswith("terminate"):
+            terminate(user_input)
+        elif user_input.lower().startswith("send"):
+            send(user_input)
+        elif user_input.lower() == "exit":
+            exit_app()
+        else:
+            print("Invalid command. Type 'help' to see list of available commands")
 
 
-def help():
-    print("myip: Displays ipv4 address of the process")
-    print("myport: Displays the port that the server socket is listening on")
-    print(
-        "connect (ip, port #): Given two inputs, will attempt to that given computer and socket. Failure/Success will give corresponding message to client and server peer")
-    print("list: Displays connection_id, IP, and port # of all connections to and from other peers")
-    print(
-        "terminate (connection_id): Terminates connection between peers. errors for no valid connections should be displayed, and disconnections initiated by other peers should also")
-    print(
-        "send (connection_id): Sends message based on list of connections, sender should get info of message, reciever should get sender info and message")
-    print("exit: Close all connections made on this process.")
+def help_menu():
+    """
+    Displays a list of available commands with their description.
+
+    :return: None
+    """
+    print("""
+    myip: Displays ipv4 address of the process
+    myport: Displays the port that the server socket is listening on
+    connect (ip, port #): Given two inputs, will attempt to that given computer and socket. Failure/Success will give corresponding message to client and server peer
+    list: Displays connection_id, IP, and port # of all connections to and from other peers")
+    terminate (connection_id): Terminates connection between peers. errors for no valid connections should be displayed, and disconnections initiated by other peers should also
+    send (connection_id): Sends message based on list of connections, sender should get info of message, receiver should get sender info and message
+    exit: Close all connections made on this process.
+    """)
 
 
-def myip():
-    s = socket(AF_INET, SOCK_DGRAM)
+def my_ip():
+    """
+    Function attempts to retrieve and display the servers IPv4 address by connecting to an external Google server.
+
+    :return: None
+    """
+    sock = socket(AF_INET, SOCK_DGRAM)
     try:
-        s.connect(("8.8.8.8", 80))  # Connect to Google DNS
-        print(s.getsockname()[0])  # Get IP
-    except Exception:
-        print("Unable to fetch IP")  # Exception catch/error message
+        sock.connect(("8.8.8.8", 80))  # Connect to Google DNS
+        print(sock.getsockname()[0])  # Get IP
+    except OSError  as e:
+        print(f"Unable to fetch IP address: {e}")
+    except Exception as e:
+        print(f"Unexpected Error: {e}")  # Exception catch/error message
     finally:
-        s.close()
+        sock.close()
 
 
-def myport():
-    portNum = serverSocket.getsockname()[1]  # Index 1 gives port #, Index 0 gives IP default "0.0.0.0"
-    print(f"Your server is running on port", portNum)
+def my_port():
+    """
+    Retrieves the port that the server socket is listening on.
+
+    :return: None
+    """
+    port_num = serverSocket.getsockname()[1]  # Index 1 gives port #, Index 0 gives IP default "0.0.0.0"
+    print(f"Your server is running on port:", port_num)
 
 
-def connect(input):
-    connectInput = input.split()
-    if len(connectInput) == 3:
-        command, serverIP, portString = connectInput  # the split will be divided up between these three variables
-        serverPort = int(portString)
+def connect(user_input):
+    """
+    Attempts to connect to another client specified by IP and port number.
+    Adds the connection to the list if successful and starts a new thread to handle communication.
+
+    :param user_input: Input from the user, expected to contain IP and port number.
+    :return: None
+    """
+    connect_input = user_input.split()
+    if len(connect_input) == 3:
+        command, server_ip, port_string = connect_input  # the split will be divided up between these three variables
+        server_port = int(port_string)
 
         try:  # Validates IP
-            inet_aton(serverIP)
+            inet_aton(server_ip)
         except error:
-            print(f"Invalid IP address: {serverIP}")
+            print(f"Invalid IP address: {server_ip}")
             return  # early function end
 
         # self-connection prevention
-        if serverIP == ipv4 and serverPort == serverSocket.getsockname()[1]:
+        if server_ip == ipv4 and server_port == serverSocket.getsockname()[1]:
             print("Cannot connect to self.")
             return
 
         # Duplicate Connections
-        if any(serverIP == client[1] and serverPort == client[2] for client in clients):
+        if any(server_ip == current_client[1] and server_port == current_client[2] for current_client in clients):
             print("Already connected to this client")
             return
 
         try:
-            clientSocket = socket(AF_INET, SOCK_STREAM)
-            clientSocket.connect((serverIP, serverPort))
-            clients.append([len(clients) + 1, serverIP, serverPort, clientSocket])
-            print("You have connected to", serverIP, "on socket", serverPort)
-            threading.Thread(target=handle_server, args=(clientSocket, serverIP)).start()
-        except Exception:
-            print(f"Failed to connect to {serverIP} on port {serverPort}. Error: {Exception}")
+            client_socket = socket(AF_INET, SOCK_STREAM)
+            client_socket.connect((server_ip, server_port))
+            clients.append([len(clients) + 1, server_ip, server_port, client_socket])
+            print("You have connected to", server_ip, "on socket", server_port)
+            threading.Thread(target=handle_server, args=(client_socket, server_ip)).start()
+        except OSError as e:
+            print(f"Failed to connect to {server_ip} on port {server_port}. Socket Error: {e}")
+        except Exception as e:
+            print(f"Unexpected Error: {e}")
 
 
-def list():
+def connection_list():
+    """
+    Displays a list of all active connections with their ID, IP address, and port number.
+
+    :return: None
+    """
     print("id: IP Addresses     Port No.")
-    for client in clients:
-        print(f"{client[0]}: {client[1]} {client[2]:>10}")
+    for current_client in clients:
+        print(f"{current_client[0]}: {current_client[1]} {current_client[2]:>10}")
 
 
-def terminate(input):
-    command, id = input.split()
-    id = int(id)
-    for client in clients:
-        if id == client[0]:
-            index = id - 1
-            messageSocket = client[3]
-            message = f"{ipv4} has terminated the connection"
-            messageSocket.send(message.encode('utf-8'))
-            messageSocket.close()
-            print(f"Closing connection on id: {client[0]}")
-            del clients[index]
+def terminate(user_input):
+    """
+    Terminates connection between a specified client using its connection ID. Sends a termination
+    message to the client and closes the connection.
+
+    :param user_input:
+    :return:
+    """
+    try:
+        command, client_id = user_input.split()
+        client_id = int(client_id)
+
+        for current_client in clients:
+            if client_id == current_client[0]:
+                index = client_id - 1
+                message_socket = current_client[3]
+                message = f"\n{ipv4} has terminated the connection"
+                message_socket.send(message.encode('utf-8'))
+                print(f"Closing connection on id: {current_client[0]}")
+                del clients[index]
+                return
+            else:
+                print("Invalid connection ID")
+
+    except ValueError:
+        print("Usage: terminate <connection_id>")
+    except Exception as e:
+        print(f"Error Occurred: {e}")
 
 
-def send(input):
-    input = input.replace("send", "")
-    index = int(input[1])
-    message = input[3:]
+def send(user_input):
+    """
+    Sends a message to specified client using its connection ID. If not connections exist,
+    or the command format is incorrect, it prints the appropriate error message.
 
-    for client in clients:
-        if index == client[0]:
-            sendSocket = client[3]
-            sendSocket.send(message.encode('utf-8'))
-            print("Message sent to:", index)
+    :param user_input: Command input from the user, expected to contain connection ID and message.
+    :return: None
+    """
+    try:
+        if not clients:
+            print("No active connections to send a message.")
+            return
+
+        user_input = user_input.replace("send", "", 1).strip()
+        parts = user_input.split(" ", 1)  # Split once at the first space
+
+        if len(parts) < 2:
+            raise ValueError("Incomplete send command.")
+
+        index = int(parts[0].strip())  # The connection ID
+        message = parts[1].strip()  # The message to send
+
+        if not message:
+            raise ValueError("No message provided.")
+
+        for current_client in clients:
+            if index == current_client[0]:
+                send_socket = current_client[3]
+                send_socket.send(message.encode('utf-8'))
+                print("Message sent to:", index)
+                return
 
 
-def exit():
+        print(f"No connection found with ID: {index}")
+
+    except ValueError as ve:
+        print("Usage: send <connection_id> <message>")
+        print(f"Error: {ve}")
+    except IndexError:
+        print("Invalid connection ID.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+def exit_app():
+    """
+    Terminates all connections made on this process and close the server before exiting the program.
+
+    :return: None
+    """
     global is_running
     is_running = False
     print("Terminating all connections and exiting...")
-    for client in clients:
-        sendSocket = client[3]
-        message = f"{ipv4} has terminated the connection"
-        sendSocket.send(message.encode('utf-8'))
-        sendSocket.close()
-        print(f"Closing connection to {client[0]}:{client[1]}")
+    for current_client in clients:
+        send_socket = current_client[3]
+        message = f"\n{ipv4} has terminated the connection"
+        send_socket.send(message.encode('utf-8'))
+        print(f"Closing connection to {current_client[0]}:{current_client[1]}")
 
     clients.clear()
     serverSocket.close()
@@ -212,14 +326,16 @@ if __name__ == '__main__':
     terminalInput.add_argument('port', type=int, help='Listening Port')
 
     # myip function but called in main to globally store ipv4
-    s = socket(AF_INET, SOCK_DGRAM)
+    sock1 = socket(AF_INET, SOCK_DGRAM)
     try:
-        s.connect(("8.8.8.8", 80))  # Connect to Google DNS
-        ipv4 = s.getsockname()[0]
-    except Exception:
-        print("Unable to fetch IP")  # Exception catch/error message
+        sock1.connect(("8.8.8.8", 80))  # Connect to Google DNS
+        ipv4 = sock1.getsockname()[0]
+    except OSError as e1:
+        print(f"Unable to fetch IP address: {e1}")
+    except Exception as e1:
+        print(f"Unexpected Error: {e1}")  # Exception catch/error message
     finally:
-        s.close()
+        sock1.close()
 
     args = terminalInput.parse_args()
     serverThread = threading.Thread(target=server, args=(args.port,))
