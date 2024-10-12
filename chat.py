@@ -1,10 +1,10 @@
-
 import sys
 from socket import *
 import argparse  # User terminal input
 import threading  # multisocketing, will solve server issue not allowing terminal usage
 import time
 
+# List to store clients with structure: [id, IP, port, socket]
 clients = []
 # id 0
 # ip 1
@@ -32,10 +32,15 @@ def server(server_port):
     print("The server is ready to receive")
     while is_running:
         try:
+            # Accept incoming connection
             connection_socket, addr = serverSocket.accept()
+
+            # Check for duplicate connections by IP and port
             if not any(addr[0] == current_client[1] and addr[1] == current_client[2] for current_client in clients):
                 clients.append([len(clients) + 1, addr[0], addr[1], connection_socket])
                 print("\nA user has connected from:", addr[0])
+
+            # Starts a new thread to handle client connection
             threading.Thread(target=handle_client, args=(connection_socket, addr)).start()
         except OSError as e:
             print(f"Unexpected Error: {e}")
@@ -54,10 +59,13 @@ def handle_client(conn, addr):
     """
     while True:
         try:
+            # Receive data from client
             message = conn.recv(1024).decode('utf-8')
             if message:
                 message_parts = message.split()
                 counter = 0
+
+                # Check if the message matches any client IP in list
                 for current_client in clients:
                     if message_parts[0] == current_client[1]:
                         print(f"{message}")
@@ -83,10 +91,13 @@ def handle_server(client_socket, addr):
     """
     while True:
         try:
+            # Receive data from server
             message = client_socket.recv(1024).decode('utf-8')
             if message:
                 message_parts = message.split()
                 counter = 0
+
+                # Check if the message matches any client IP in list
                 for current_client in clients:
                     if message_parts[0] == current_client[1]:
                         print(f"{message}")
@@ -207,6 +218,7 @@ def connect(user_input):
             return
 
         try:
+            # Establish a connection to specified server
             client_socket = socket(AF_INET, SOCK_STREAM)
             client_socket.connect((server_ip, server_port))
             clients.append([len(clients) + 1, server_ip, server_port, client_socket])
@@ -234,13 +246,14 @@ def terminate(user_input):
     Terminates connection between a specified client using its connection ID. Sends a termination
     message to the client and closes the connection.
 
-    :param user_input:
-    :return:
+    :param user_input: Command input from user, expected to contain connection ID.
+    :return: None
     """
     try:
         command, client_id = user_input.split()
         client_id = int(client_id)
 
+        # Find and remove the client by ID
         for current_client in clients:
             if client_id == current_client[0]:
                 index = client_id - 1
@@ -264,6 +277,8 @@ def send(user_input):
     Sends a message to specified client using its connection ID. If not connections exist,
     or the command format is incorrect, it prints the appropriate error message.
 
+    Note: Messages are limited to a maximum length of 100 characters.
+
     :param user_input: Command input from the user, expected to contain connection ID and message.
     :return: None
     """
@@ -272,6 +287,7 @@ def send(user_input):
             print("No active connections to send a message.")
             return
 
+        # Removes the 'send' from command, and splits it into connection ID and message
         user_input = user_input.replace("send", "", 1).strip()
         parts = user_input.split(" ", 1)  # Split once at the first space
 
