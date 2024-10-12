@@ -1,3 +1,10 @@
+"""
+Programming Assignment 1
+Group 20: Noelani Mishina Hinh, Ryan Kwan, Brandon Jou
+
+chat.py
+Purpose: Chat Application for Remote Message Exchange
+"""
 import sys
 from socket import *
 import argparse  # User terminal input
@@ -162,7 +169,7 @@ def help_menu():
 
 def my_ip():
     """
-    Function attempts to retrieve and display the servers IPv4 address by connecting to an external Google server.
+    Function attempts to retrieve and display the servers IPv4 address (IP address of device) by connecting to an external Google server.
 
     :return: None
     """
@@ -202,7 +209,7 @@ def connect(user_input):
         server_port = int(port_string)
 
         try:  # Validates IP
-            inet_aton(server_ip)
+            inet_aton(server_ip) # Takes a string and converts into 32-bit binary (returns non-zero value if successful, returns 0 if address invalid)
         except error:
             print(f"Invalid IP address: {server_ip}")
             return  # early function end
