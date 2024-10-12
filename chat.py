@@ -37,7 +37,9 @@ def server(server_port):
                 clients.append([len(clients) + 1, addr[0], addr[1], connection_socket])
                 print("\nA user has connected from:", addr[0])
             threading.Thread(target=handle_client, args=(connection_socket, addr)).start()
-        except OSError:
+        except OSError as e:
+            print(f"Unexpected Error: {e}")
+            print("User has failed to connect")
             break
 
 
@@ -281,7 +283,8 @@ def send(user_input):
 
         if not message:
             raise ValueError("No message provided.")
-
+        if len(message) > 100:
+            raise Exception("Message too long. Message must be under 100 characters")
         for current_client in clients:
             if index == current_client[0]:
                 send_socket = current_client[3]
