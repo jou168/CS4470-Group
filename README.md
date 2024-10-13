@@ -20,8 +20,8 @@ This project is a multi-threaded TCP client-server chat application that allows 
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/tcp-client-server-chat.git
-cd tcp-client-server-chat
+git clone https://github.com/yourusername/CS4470-Group.git
+cd CS4470-Group
 ```
 ### Step 2: Run the Server and Client
 
