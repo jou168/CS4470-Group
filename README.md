@@ -77,9 +77,9 @@ terminate 1
 
 ## Implementation Details
 
-    Server and Client Handling: The server listens for incoming connections on a specified port, while clients can initiate connections and communicate with other clients.
-    Ephemeral Ports: When clients initiate connections, they use ephemeral ports assigned by the OS. This allows multiple connections from the same client.
-    Threading: The server spawns a new thread for each client connection, enabling concurrent message handling.
+- Server and Client Handling: The server listens for incoming connections on a specified port, while clients can initiate connections and communicate with other clients.
+- Ephemeral Ports: When clients initiate connections, they use ephemeral ports assigned by the OS. This allows multiple connections from the same client.
+- Threading: The server spawns a new thread for each client connection, enabling concurrent message handling.
 
 ## Error Handling
 
